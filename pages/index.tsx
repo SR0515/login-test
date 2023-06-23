@@ -1,118 +1,156 @@
-import Image from 'next/image'
-import { Inter } from 'next/font/google'
+import axios from "axios";
+import { useRouter } from "next/router";
+import { useEffect, useState } from "react";
+import { SubmitHandler, useForm } from "react-hook-form";
+import { User } from '@prisma/client';
+import { signIn, signOut, useSession } from "next-auth/react";
 
-const inter = Inter({ subsets: ['latin'] })
 
 export default function Home() {
-  return (
-    <main
-      className={`flex min-h-screen flex-col items-center justify-between p-24 ${inter.className}`}
-    >
-      <div className="z-10 w-full max-w-5xl items-center justify-between font-mono text-sm lg:flex">
-        <p className="fixed left-0 top-0 flex w-full justify-center border-b border-gray-300 bg-gradient-to-b from-zinc-200 pb-6 pt-8 backdrop-blur-2xl dark:border-neutral-800 dark:bg-zinc-800/30 dark:from-inherit lg:static lg:w-auto  lg:rounded-xl lg:border lg:bg-gray-200 lg:p-4 lg:dark:bg-zinc-800/30">
-          Get started by editing&nbsp;
-          <code className="font-mono font-bold">pages/index.tsx</code>
-        </p>
-        <div className="fixed bottom-0 left-0 flex h-48 w-full items-end justify-center bg-gradient-to-t from-white via-white dark:from-black dark:via-black lg:static lg:h-auto lg:w-auto lg:bg-none">
-          <a
-            className="pointer-events-none flex place-items-center gap-2 p-8 lg:pointer-events-auto lg:p-0"
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            By{' '}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className="dark:invert"
-              width={100}
-              height={24}
-              priority
-            />
-          </a>
-        </div>
-      </div>
+        const router = useRouter();
+        // const [userList, setUserList] = useState([]);
+        const {register, handleSubmit, reset, formState:{errors} } = useForm<User>({ mode : 'onSubmit' });
+        const {data: session} = useSession()
 
-      <div className="relative flex place-items-center before:absolute before:h-[300px] before:w-[480px] before:-translate-x-1/2 before:rounded-full before:bg-gradient-radial before:from-white before:to-transparent before:blur-2xl before:content-[''] after:absolute after:-z-20 after:h-[180px] after:w-[240px] after:translate-x-1/3 after:bg-gradient-conic after:from-sky-200 after:via-blue-200 after:blur-2xl after:content-[''] before:dark:bg-gradient-to-br before:dark:from-transparent before:dark:to-blue-700/10 after:dark:from-sky-900 after:dark:via-[#0141ff]/40 before:lg:h-[360px]">
-        <Image
-          className="relative dark:drop-shadow-[0_0_0.3rem_#ffffff70] dark:invert"
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
-        />
-      </div>
+        const onValid : SubmitHandler<User> = async (formData) => {
+          const { username, password} = formData;
 
-      <div className="mb-32 grid text-center lg:mb-0 lg:grid-cols-4 lg:text-left">
-        <a
-          href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Docs{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Find in-depth information about Next.js features and API.
-          </p>
-        </a>
+          const res = await signIn('username-password-credential' , {    //username과 password값을 signIn 함수 이용해서 res값 얻기
+            username,                                                    //signIn 함수 첫번째 인자 값: username-password-credential   두번째인자 값: 객체(필요한 정보)
+            password,
+            redirect : false,  //에러 발생 시 새로고침x
+          });
 
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Learn{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Learn about Next.js in an interactive course with&nbsp;quizzes!
-          </p>
-        </a>
+          res?.status === 401 && alert('로그인 정보가 일치하지않습니다.');
+          if(res?.status === 200){
+            await Promise.all([router.replace('/main'), reset()]);       //res 값에 에러가 없으면 /main페이지로 이동
+          }
+        }
 
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Templates{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Discover and deploy boilerplate example Next.js&nbsp;projects.
-          </p>
-        </a>
 
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Deploy{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
-      </div>
-    </main>
-  )
+        useEffect(() => {
+          router.prefetch('/');
+        }, []);
+
+
+        // async function fn() {
+        //   const { data } = await axios.get("/api/user");
+        //   setUserList(data);
+        // }
+        
+        if(session){
+          return (
+            <>
+              Signed in as {session.user?.email} <br />
+              <button onClick={() => signOut()}>
+                로그아웃
+              </button>
+            </>
+          );
+        }   
+
+        return (
+          <>
+            <form onSubmit={handleSubmit(onValid)}>
+              <input
+                {...register("username", {
+                  required: {
+                    value: true,
+                    message: "이메일은 필수 입력 사항입니다.",
+                  },
+                  maxLength: {
+                    value: 40,
+                    message: "이메일은 40자리 이하로 입력해주세요.",
+                  },
+                  pattern: {
+                    value: /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/,
+                    message: "이메일 형식을 확인해주세요.",
+                  },
+                })}
+                type="text"
+                name="username"
+                id="username"
+                placeholder="name@email.com"
+              />
+              <br />
+              <span>{errors?.username?.message}</span>
+              <br />
+
+              <input
+                {...register("password", {
+                  required: {
+                    value: true,
+                    message: "패스워드는 필수 입력 사항입니다.",
+                  },
+                  pattern: {
+                    value:
+                      /^(?=.*[a-zA-Z])(?=.*[!@#$%^*+=-])(?=.*[0-9]).{7,14}\S$/g,
+                    message:
+                      "공백을 제외한 영문 숫자 특수기호 조합 8자리 이상.",
+                  },
+                })}
+                type="password"
+                name="password"
+                id="password"
+                placeholder="••••••••"
+              />
+              <br />
+
+              <span>{errors?.password?.message}</span>
+              <br />
+
+              <button type="submit">로그인</button>
+            </form>
+          </>
+        );
+
 }
+      
+
+      // <input 
+      //   {...register('username',{
+      //     required:{ 
+      //       value: true,
+      //       message: '이메일은 필수 입력 사항입니다.',
+      //     },
+      //     maxLength:{
+      //       value:40,
+      //       message:'이메일은 40자리 이하로 입력해주세요.',
+      //     },
+      //     pattern: {
+      //         value: /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/,
+      //         message:
+      //              '이메일 형식을 확인해주세요.',
+      //     },
+      //   })}
+      //   type="text" name="username" id="email" placeholder="name@email.com" />
+
+     
+   
+ 
+
+
+ // <form
+      //   onSubmit={async (e) => {
+      //     e.preventDefault();
+      //     const username = e.target.username.value;
+      //     const password = e.target.password.value;
+      //     const data = {
+      //       username: username,
+      //       password: password,
+      //     };
+      //     console.log(data);
+      //     await axios.post("/api/user", data);
+      //     router.reload();
+      //   }}
+      // >
+      //   <input name="username" type="text" placeholder="ID" required /> <br />
+      //   <input
+      //     name="password"
+      //     type="password"
+      //     placeholder="Password"
+      //     required
+      //   />
+      //   <br />
+      //   <button>로그인</button>
+      // </form>
